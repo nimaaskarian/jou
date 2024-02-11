@@ -1,4 +1,4 @@
-use std::{io::{self, stdout}};
+use std::{io::{self, stdout, Write}, env, process::{Command, Stdio}, fs::{self, File}};
 use ratatui::{prelude::*, widgets::*};
 use tui_textarea::{Input, TextArea, CursorMove, Key};
 use crossterm::{
@@ -51,18 +51,27 @@ enum TuiMode {
     Password,
     List,
     TextEditor,
+    Pager,
 }
 pub struct TuiApp<'a>{
     mode: TuiMode,
     textarea: TextArea<'a>,
     app: &'a mut App,
     index: usize,
+    pager_scroll: usize,
+}
+
+enum Operation {
+    Nothing,
+    Restart,
+    Quit,
 }
 
 impl <'a>TuiApp <'a>{
     pub fn new(app: &'a mut App) -> Self {
-        let mut textarea = TextArea::default();
+        let textarea = TextArea::default();
         let mut tui_app = TuiApp {
+            pager_scroll: 0,
             index: 0,
             mode: TuiMode::List,
             textarea,
@@ -93,13 +102,14 @@ impl <'a>TuiApp <'a>{
                 self.textarea.clear_mask_char();
                 self.textarea.set_block(default_block("Write your new journal"));
             }
-            TuiMode::List =>  {}
+            TuiMode::List | TuiMode::Pager =>  {}
         }
         self.mode = mode;
     }
 
     #[inline]
-    pub fn ui(&mut self, frame: &mut Frame) {
+    pub fn ui(&mut self, frame:&mut Frame, list_state: &mut ListState, scrollbar_state: &mut ScrollbarState) {
+        list_state.select(Some(self.index));
         match self.mode {
             TuiMode::Password => {
                 self.textarea.set_mask_char('\u{2022}');
@@ -114,19 +124,32 @@ impl <'a>TuiApp <'a>{
                 let list = 
                     List::new(self.app.entries())
                     .block(default_block("Journals"))
-                    .highlight_style(Style::new().add_modifier(Modifier::REVERSED))
-                    .highlight_symbol(">>")
-                    .repeat_highlight_symbol(true);
+                    .highlight_style(Style::new().add_modifier(Modifier::REVERSED));
 
-                frame.render_widget(list, frame.size());
+                frame.render_stateful_widget(list, frame.size(), list_state)
+            }
+            TuiMode::Pager => {
+                let paragraph = Paragraph::new(self.app.nth_content(self.index));
+                let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight)
+                    .begin_symbol(Some("↑"))
+                    .end_symbol(Some("↓"));
+                frame.render_widget(paragraph, frame.size());
+                frame.render_stateful_widget(scrollbar, frame.size().inner(&Margin {
+                    vertical: 1,
+                    horizontal: 0,
+                }),
+                scrollbar_state,
+                );
             }
         }
     }
 
     #[inline]
     pub fn increment_index(&mut self) {
-        if self.index < self.app.len() {
+        if self.index < self.app.len() - 1 {
             self.index += 1;
+        } else {
+            self.index = 0
         }
     }
 
@@ -134,6 +157,8 @@ impl <'a>TuiApp <'a>{
     pub fn decrement_index(&mut self) {
         if self.index > 0 {
             self.index -= 1;
+        } else {
+            self.index = self.app.len() - 1
         }
     }
 
@@ -152,12 +177,12 @@ impl <'a>TuiApp <'a>{
     }
 
     fn on_journal_enter(&mut self) {
-        self.textarea = TextArea::default();
         self.set_mode(TuiMode::List);
         self.app.add_journal(self.textarea.lines().join("\n"));
+        self.textarea = TextArea::default();
     }
 
-    pub fn input(&mut self) -> io::Result<bool>{
+    pub fn input(&mut self) -> io::Result<Operation>{
         match crossterm::event::read()?.into() {
             input => {
             match self.mode {
@@ -170,7 +195,7 @@ impl <'a>TuiApp <'a>{
                         Input {
                             key: Key::Esc,
                             ..
-                        } => return Ok(true),
+                        } => return Ok(Operation::Quit),
                         input => {
                             self.set_mode(TuiMode::Password);
                             self.textarea.input(input);
@@ -190,19 +215,30 @@ impl <'a>TuiApp <'a>{
                 }
                 TuiMode::List => {
                     match input.key {
-                        Key::Char('q')=> return Ok(true),
-                        Key::Char('j')=> self.increment_index(),
+                        Key::Char('q')=> return Ok(Operation::Quit),
                         Key::Char('a')=> {
                             self.set_mode(TuiMode::TextEditor);
                         },
+                        Key::Enter => {
+                            self.set_mode(TuiMode::Pager);
+                        }
+                        Key::Char('j')=> self.increment_index(),
                         Key::Char('k')=> self.decrement_index(),
                         _ =>{},
+                    }
+                }
+                TuiMode::Pager => {
+                    match input.key {
+                        Key::Char('j')=> self.pager_scroll+=1,
+                        Key::Char('k')=> self.pager_scroll-=1,
+                        Key::Esc | Key::Char('q')=> self.set_mode(TuiMode::List),
+                        _ => {}
                     }
                 }
             }
         }
         }
-        Ok(false)
+        Ok(Operation::Nothing)
     }
 }
 
@@ -230,18 +266,24 @@ fn centered_rect(r: Rect, percent_x: u16, size_y: u16) -> Rect {
 
 #[inline]
 pub fn run(app: &mut App) -> io::Result<()>{
-    startup();
+    startup()?;
     let mut terminal = Terminal::new(CrosstermBackend::new(io::stdout()))?;
     let mut app = TuiApp::new(app);
+    let mut list_state = ListState::default();
+    let mut scrollbar_state = ScrollbarState::default();
 
     loop {
         terminal.draw(|frame| {
-            app.ui(frame);
+            app.ui(frame, &mut list_state, &mut scrollbar_state);
         })?;
-        if app.input()? {
-            break;
+        match app.input()? {
+            Operation::Quit => break,
+            Operation::Restart => {
+                restart(&mut terminal)?;
+            }
+            Operation::Nothing => {},
         }
     }
-    shutdown();
+    shutdown()?;
     Ok(())
 }

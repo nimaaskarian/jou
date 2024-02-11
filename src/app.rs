@@ -1,4 +1,4 @@
-use std::{fs, path::PathBuf, ffi::OsString};
+use std::{fs, path::PathBuf, ffi::OsString, io};
 
 use crate::Args;
 
@@ -38,20 +38,32 @@ impl App {
     }
 
     pub fn len(&self) -> usize {
-        self.directory.size()
+        self.directory.len()
     }
 
     pub fn empty(&self) -> bool {
         self.len() == 0
     }
 
-    fn add_journals(&self) {
-        if self.test_passphrase().is_ok() {
+    pub fn nth_content(&self, n: usize) -> String {
+        if let Some(encryption) = &self.encryption {
+            let path = self.directory.nth_path(n).unwrap();
+            let encrypted = fs::read(path).unwrap();
+            let decrypted =encryption.decrypt(encrypted);
+            return decrypted.unwrap()
+        }
+        String::new()
+    }
 
+    pub fn add_journals(&self) {
+        if self.test_passphrase().is_ok() {
+            for journal in &self.journals_to_add {
+                self.add_journal(journal)
+            }
         }
     }
 
-    pub fn add_journal(&self, journal: String) {
+    pub fn add_journal<S: AsRef<str>>(&self, journal: S) {
         if let Some(encryption) = &self.encryption {
             let encrypted = encryption.encrypt(journal).unwrap();
             let path = self.directory.new_path().unwrap();

@@ -38,11 +38,15 @@ pub struct Args {
     /// Add a journal entry
     #[arg(short='a', long)]
     add: Vec<String>,
+
+    /// Add a journal entry
+    #[arg(short='l', long)]
+    list: bool,
 }
 
 impl Args {
     pub fn is_cli(&self) -> bool {
-        !self.add.is_empty()
+        self.list || !self.add.is_empty()
     }
 }
 
@@ -51,7 +55,7 @@ fn main() -> io::Result<()>{
     let is_cli = args.is_cli();
     let mut app = App::new(args);
     if is_cli {
-
+        cli::run(&mut app);
     } else {
         tui::run(&mut app)?;
     }

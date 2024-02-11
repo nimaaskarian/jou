@@ -10,7 +10,7 @@ fn getline<S: AsRef<str>>(prompt: S) -> io::Result<String>{
     Ok(output.lines().next().unwrap().to_string())
 }
 
-fn run(app: &mut App) -> io::Result<()>{
+pub fn run(app: &mut App) -> io::Result<()>{
     if app.no_passphrase() {
         app.set_passphrase(getline("Enter your password")?);
     }
@@ -21,7 +21,8 @@ fn run(app: &mut App) -> io::Result<()>{
     }
     app.read();
 
-    // if let Some(journal) = args.add {
+    app.add_journals();
+    // for journal in app.add_journal(journal)
     //     app.new_journal(journal)
     // }
 

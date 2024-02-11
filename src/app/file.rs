@@ -56,10 +56,10 @@ impl Directory {
         Ok(path)
     }
     
-    pub fn size(&self) -> usize {
+    pub fn len(&self) -> usize {
         let count = {
             let mut count = 0;
-            for _ in fs::read_dir(&self.path) {
+            for _ in fs::read_dir(&self.path).unwrap() {
                 count+=1
             }
             count
@@ -70,7 +70,7 @@ impl Directory {
 
     pub fn entries(&self) -> io::Result<Vec<String>> {
         let mut output = vec![];
-        for entry in fs::read_dir(&self.path)? {
+        for entry in fs::read_dir(&self.path).unwrap() {
             let entry = entry?;
             if let Some(name) = entry.path().file_name() {
                 output.push(name.to_str().unwrap().to_string());
