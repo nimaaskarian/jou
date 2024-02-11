@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 home = "0.5.9"
-ratatui = "0.25.0"
+ratatui = "0.26.0"
 crossterm = "0.27.0"
 tui-textarea = "0.4.0"
 chrono = "0.4.33"

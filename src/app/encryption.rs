@@ -2,6 +2,7 @@ use age::secrecy::Secret;
 use std::io::{Read, Write};
 use age::{EncryptError, DecryptError};
 
+#[derive(Clone)]
 pub struct Encryption {
     secret: Secret<String>,
 }

@@ -68,6 +68,17 @@ impl Directory {
         count
     }
 
+    pub fn entries(&self) -> io::Result<Vec<String>> {
+        let mut output = vec![];
+        for entry in fs::read_dir(&self.path)? {
+            let entry = entry?;
+            if let Some(name) = entry.path().file_name() {
+                output.push(name.to_str().unwrap().to_string());
+            }
+        }
+        Ok(output)
+    }
+
     pub fn read<F>(&self, callback: F) -> io::Result<()> where 
         F: Fn(PathBuf) {
         for entry in fs::read_dir(&self.path)? {

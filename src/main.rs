@@ -3,58 +3,57 @@ use std::{fs, path::PathBuf, io::{self, Write}};
 use clap::Parser;
 use home::home_dir;
 mod app;
+mod cli;
 use app::App;
 
 fn print_files(path: PathBuf) {
     println!("{}", path.as_os_str().to_str().unwrap());
 }
 
-pub fn append_home_dir(str:&str) -> PathBuf {
-    PathBuf::from(format!("{}/{}", home_dir().unwrap().to_str().unwrap(), str))
+pub fn append_home_dir(vec: [&str; 3]) -> PathBuf {
+    let mut path = PathBuf::from(format!("{}", home_dir().unwrap().to_str().unwrap()));
+    for item in vec {
+        path = path.join(item);
+    }
+
+    return path
 }
 
 pub fn default_directory() -> PathBuf {
-    append_home_dir( ".local/share/jou")
+    append_home_dir([".local", "share", "jou"])
 }
-
 
 /// A good journal application a day, make therapy go away
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct Args {
+    /// Path to journal directory. Unique for each password
     #[arg(short, long,default_value=default_directory().into_os_string())]
     path: PathBuf,
+
+    /// Pass the passphrase non-interactively
+    #[arg(short='P', long)]
+    passphrase: Option<String>,
+
+    /// Add a journal entry
+    #[arg(short='a', long)]
+    add: Vec<String>,
 }
 
-fn getline<S: AsRef<str>>(prompt: S) -> io::Result<String>{
-    println!("{}", prompt.as_ref());
-    let mut output = String::new();
-    let stdin = io::stdin();
-    stdin.read_line(&mut output)?;
-    Ok(output.lines().next().unwrap().to_string())
+impl Args {
+    pub fn is_cli(&self) -> bool {
+        !self.add.is_empty()
+    }
 }
 
 fn main() -> io::Result<()>{
     let args = Args::parse();
-    let passphrase = getline("Gimme passphrase")?;
-    let mut app = App::new(args, passphrase);
+    let is_cli = args.is_cli();
+    let mut app = App::new(args);
+    if is_cli {
 
-    if app.test_passphrase().is_err() {
-        println!("Incorrect password")
+    } else {
+        tui::run(&mut app)?;
     }
-    // let dir = Directory::new(args.path).unwrap();
-    // let path = dir.new_path()?;
-    // let encryption = Encryption::new(passphrase);
-
-    // dir.read(|path| {
-    //     let string = fs::read(path).unwrap();
-    //     println!("{}", encryption.decrypt(string).unwrap());
-    // })?;
-
-    // let text = getline("Gimme content")?;
-    // if !text.is_empty() {
-    //     let encrypted = encryption.encrypt(text).unwrap();
-    //     fs::write(path, encrypted);
-    // }
     Ok(())
 }
