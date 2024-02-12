@@ -28,7 +28,7 @@ pub fn encryption_from_option_passphrase(passphrase: Option<String>) -> Option<E
 
 impl App {
     pub fn new(args:Args) -> Self {
-        let app = App {
+        let mut app = App {
             journals_to_add: args.add,
             encryption: encryption_from_option_passphrase(args.passphrase),
             directory: Directory::new(args.path).unwrap(),
@@ -45,7 +45,7 @@ impl App {
         self.len() == 0
     }
 
-    pub fn nth_content(&self, n: usize) -> String {
+    pub fn nth_content(&mut self, n: usize) -> String {
         if let Some(encryption) = &self.encryption {
             let path = self.directory.nth_path(n).unwrap();
             let encrypted = fs::read(path).unwrap();
@@ -55,7 +55,7 @@ impl App {
         String::new()
     }
 
-    pub fn add_journals(&self) {
+    pub fn add_journals(&mut self) {
         if self.test_passphrase().is_ok() {
             for journal in &self.journals_to_add {
                 self.add_journal(journal)
@@ -83,7 +83,7 @@ impl App {
         self.encryption = Some(Encryption::new(passphrase))
     }
 
-    pub fn test_passphrase(&self) -> Result<(), AppError> {
+    pub fn test_passphrase(&mut self) -> Result<(), AppError> {
         if let Some(first_path) = self.directory.nth_path(0) {
             let decrypted = match (fs::read(&first_path), &self.encryption) {
                 (Ok(encrypted), Some(encryption)) => {
@@ -112,7 +112,7 @@ impl App {
         Ok(())
     }
 
-    pub fn entries(&self) -> Vec<String> {
+    pub fn entries(&mut self) -> Vec<String> {
         match self.directory.entries() {
             Ok(entry) => entry,
             _ => vec![],

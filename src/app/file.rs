@@ -4,6 +4,8 @@ mod date;
 
 pub struct Directory {
     path: PathBuf,
+    entries: Vec<String>,
+    last_len: usize,
 }
 #[derive(Debug)]
 pub enum DirectoryError {
@@ -39,20 +41,15 @@ impl Directory {
         } else {
             Ok(Directory {
                 path,
+                last_len: 0,
+                entries: vec![],
             })
         }
-    }
-
-    pub fn new_file(&self) -> io::Result<File> {
-        let path = self.new_path()?;
-        // File::open(path)
-        File::create(&path)
     }
 
     pub fn new_path(&self) -> io::Result<PathBuf> {
         let filename = date::current_string();
         let path = self.path.join(filename);
-        // File::create(&path)?;
         Ok(path)
     }
     
@@ -68,15 +65,25 @@ impl Directory {
         count
     }
 
-    pub fn entries(&self) -> io::Result<Vec<String>> {
-        let mut output = vec![];
+    pub fn update_entries(&mut self) -> io::Result<()>{
+        self.entries = vec![];
         for entry in fs::read_dir(&self.path).unwrap() {
             let entry = entry?;
             if let Some(name) = entry.path().file_name() {
-                output.push(name.to_str().unwrap().to_string());
+                self.entries.push(name.to_str().unwrap().to_string());
             }
         }
-        Ok(output)
+        self.entries.sort_by(|a, b| b.cmp(a));
+        Ok(())
+    }
+
+    pub fn entries(&mut self) -> io::Result<Vec<String>> {
+        let len = self.len();
+        if len != self.last_len {
+            self.update_entries();
+            self.last_len = len;
+        }
+        Ok(self.entries.clone())
     }
 
     pub fn read<F>(&self, callback: F) -> io::Result<()> where 
@@ -88,34 +95,12 @@ impl Directory {
         Ok(())
     }
 
-    pub fn names(&self) -> Vec<OsString> {
-        let mut output = vec![];
-        let dir_iterator = match fs::read_dir(&self.path) {
-            Ok(some) => some,
-            Err(_) => return output,
-        };
-        for entry in dir_iterator {
-            let entry = entry.unwrap();
-            output.push(entry.file_name());
-        }
-        return output;
-    }
-
-    pub fn nth_path(&self, n: usize) -> Option<PathBuf> {
-        let dir_iterator = match fs::read_dir(&self.path) {
-            Ok(some) => some,
-            Err(_) => return None,
-        };
-        for (i, entry) in dir_iterator.enumerate() {
-            let entry = entry.unwrap();
+    pub fn nth_path(&mut self, n: usize) -> Option<PathBuf> {
+        for (i, entry) in self.entries().unwrap().iter().enumerate() {
             if i == n {
-                return Some(entry.path())
+                return Some(self.path.join(entry))
             }
         }
         None
-    }
-    
-    pub fn name(&self) -> Option<&OsStr> {
-        self.path.file_name()
     }
 }

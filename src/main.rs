@@ -39,7 +39,7 @@ pub struct Args {
     #[arg(short='a', long)]
     add: Vec<String>,
 
-    /// Add a journal entry
+    /// List in non-interactive mode
     #[arg(short='l', long)]
     list: bool,
 }
