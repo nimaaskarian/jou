@@ -1,7 +1,7 @@
 use chrono::{Local ,DateTime, FixedOffset};
 use chrono::format::ParseError;
 // const FORMAT: &str = "%Y-%m-%d.%H:%M:%S";
-const FORMAT: &str = "%Y-%m-%d-%H-%M-%S";
+const FORMAT: &str = "%Y-%m-%d_%H-%M-%S";
 
 #[inline]
 pub fn parse(date_string: &String) -> Result<DateTime<FixedOffset>, ParseError> {

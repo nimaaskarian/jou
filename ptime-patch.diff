@@ -1,0 +1,346 @@
+diff --git a/Cargo.lock b/Cargo.lock
+index 9c6f17c..1269baf 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -85,21 +85,6 @@ version = "0.2.16"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "0942ffc6dcaadf03badf6e6a2d0228460359d5e34b57ccdc720b7382dfbd5ec5"
+ 
+-[[package]]
+-name = "android-tzdata"
+-version = "0.1.1"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "e999941b234f3131b00bc13c22d06e8c5ff726d1b6318ac7eb276997bbb4fef0"
+-
+-[[package]]
+-name = "android_system_properties"
+-version = "0.1.5"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "819e7219dbd41043ac279b19830f2efc897156490d7fd6ea916720117ee66311"
+-dependencies = [
+- "libc",
+-]
+-
+ [[package]]
+ name = "anstream"
+ version = "0.6.11"
+@@ -193,12 +178,6 @@ dependencies = [
+  "generic-array",
+ ]
+ 
+-[[package]]
+-name = "bumpalo"
+-version = "3.14.0"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "7f30e7476521f6f8af1a1c4c0b8cc94f0bee37d91763d0ca2665f299b6cd8aec"
+-
+ [[package]]
+ name = "cassowary"
+ version = "0.3.0"
+@@ -214,15 +193,6 @@ dependencies = [
+  "rustversion",
+ ]
+ 
+-[[package]]
+-name = "cc"
+-version = "1.0.83"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "f1174fb0b6ec23863f8b971027804a42614e347eafb0a95bf0b12cdae21fc4d0"
+-dependencies = [
+- "libc",
+-]
+-
+ [[package]]
+ name = "cfg-if"
+ version = "1.0.0"
+@@ -253,20 +223,6 @@ dependencies = [
+  "zeroize",
+ ]
+ 
+-[[package]]
+-name = "chrono"
+-version = "0.4.33"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "9f13690e35a5e4ace198e7beea2895d29f3a9cc55015fcebe6336bd2010af9eb"
+-dependencies = [
+- "android-tzdata",
+- "iana-time-zone",
+- "js-sys",
+- "num-traits",
+- "wasm-bindgen",
+- "windows-targets 0.52.0",
+-]
+-
+ [[package]]
+ name = "cipher"
+ version = "0.4.4"
+@@ -343,12 +299,6 @@ version = "0.3.2"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "396de984970346b0d9e93d1415082923c679e5ae5c3ee3dcbd104f5610af126b"
+ 
+-[[package]]
+-name = "core-foundation-sys"
+-version = "0.8.6"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "06ea2b9bc92be3c2baa9334a323ebca2d6f074ff852cd1d7b11064035cd3868f"
+-
+ [[package]]
+ name = "cpufeatures"
+ version = "0.2.12"
+@@ -544,7 +494,7 @@ checksum = "190092ea657667030ac6a35e305e62fc4dd69fd98ac98631e5d3a2b1575a12b5"
+ dependencies = [
+  "cfg-if",
+  "libc",
+- "wasi",
++ "wasi 0.11.0+wasi-snapshot-preview1",
+ ]
+ 
+ [[package]]
+@@ -659,29 +609,6 @@ dependencies = [
+  "syn 2.0.48",
+ ]
+ 
+-[[package]]
+-name = "iana-time-zone"
+-version = "0.1.60"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "e7ffbb5a1b541ea2561f8c41c087286cc091e21e556a4f09a8f6cbf17b69b141"
+-dependencies = [
+- "android_system_properties",
+- "core-foundation-sys",
+- "iana-time-zone-haiku",
+- "js-sys",
+- "wasm-bindgen",
+- "windows-core",
+-]
+-
+-[[package]]
+-name = "iana-time-zone-haiku"
+-version = "0.1.2"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "f31827a206f56af32e590ba56d5d2d085f558508192593743f16b2306495269f"
+-dependencies = [
+- "cc",
+-]
+-
+ [[package]]
+ name = "indexmap"
+ version = "2.2.2"
+@@ -752,23 +679,14 @@ name = "jou"
+ version = "0.1.0"
+ dependencies = [
+  "age",
+- "chrono",
+  "clap",
+  "crossterm",
+  "home",
++ "ptime",
+  "ratatui",
+  "tui-textarea",
+ ]
+ 
+-[[package]]
+-name = "js-sys"
+-version = "0.3.68"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "406cda4b368d531c842222cf9d2600a9a4acce8d29423695379c6868a143a9ee"
+-dependencies = [
+- "wasm-bindgen",
+-]
+-
+ [[package]]
+ name = "lazy_static"
+ version = "1.4.0"
+@@ -826,7 +744,7 @@ checksum = "8f3d0b296e374a4e6f3c7b0a1f5a51d748a0d34c85e7dc48fc3fa9a87657fe09"
+ dependencies = [
+  "libc",
+  "log",
+- "wasi",
++ "wasi 0.11.0+wasi-snapshot-preview1",
+  "windows-sys 0.48.0",
+ ]
+ 
+@@ -840,15 +758,6 @@ dependencies = [
+  "minimal-lexical",
+ ]
+ 
+-[[package]]
+-name = "num-traits"
+-version = "0.2.18"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "da0df0e5185db44f69b44f26786fe401b6c293d1907744beaa7fa62b2e5a517a"
+-dependencies = [
+- "autocfg",
+-]
+-
+ [[package]]
+ name = "once_cell"
+ version = "1.19.0"
+@@ -976,6 +885,15 @@ dependencies = [
+  "unicode-ident",
+ ]
+ 
++[[package]]
++name = "ptime"
++version = "0.1.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "242c83cf47ae6f1d53e99ea7d959ec637a10506ce5c853b1ad81f73dd6d60694"
++dependencies = [
++ "time",
++]
++
+ [[package]]
+ name = "quote"
+ version = "1.0.35"
+@@ -1344,6 +1262,17 @@ dependencies = [
+  "syn 2.0.48",
+ ]
+ 
++[[package]]
++name = "time"
++version = "0.1.45"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "1b797afad3f312d1c66a56d11d0316f916356d11bd158fbc6ca6389ff6bf805a"
++dependencies = [
++ "libc",
++ "wasi 0.10.0+wasi-snapshot-preview1",
++ "winapi",
++]
++
+ [[package]]
+ name = "tinystr"
+ version = "0.7.5"
+@@ -1493,63 +1422,15 @@ dependencies = [
+ 
+ [[package]]
+ name = "wasi"
+-version = "0.11.0+wasi-snapshot-preview1"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
+-
+-[[package]]
+-name = "wasm-bindgen"
+-version = "0.2.91"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "c1e124130aee3fb58c5bdd6b639a0509486b0338acaaae0c84a5124b0f588b7f"
+-dependencies = [
+- "cfg-if",
+- "wasm-bindgen-macro",
+-]
+-
+-[[package]]
+-name = "wasm-bindgen-backend"
+-version = "0.2.91"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "c9e7e1900c352b609c8488ad12639a311045f40a35491fb69ba8c12f758af70b"
+-dependencies = [
+- "bumpalo",
+- "log",
+- "once_cell",
+- "proc-macro2",
+- "quote",
+- "syn 2.0.48",
+- "wasm-bindgen-shared",
+-]
+-
+-[[package]]
+-name = "wasm-bindgen-macro"
+-version = "0.2.91"
++version = "0.10.0+wasi-snapshot-preview1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "b30af9e2d358182b5c7449424f017eba305ed32a7010509ede96cdc4696c46ed"
+-dependencies = [
+- "quote",
+- "wasm-bindgen-macro-support",
+-]
+-
+-[[package]]
+-name = "wasm-bindgen-macro-support"
+-version = "0.2.91"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "642f325be6301eb8107a83d12a8ac6c1e1c54345a7ef1a9261962dfefda09e66"
+-dependencies = [
+- "proc-macro2",
+- "quote",
+- "syn 2.0.48",
+- "wasm-bindgen-backend",
+- "wasm-bindgen-shared",
+-]
++checksum = "1a143597ca7c7793eff794def352d41792a93c481eb1042423ff7ff72ba2c31f"
+ 
+ [[package]]
+-name = "wasm-bindgen-shared"
+-version = "0.2.91"
++name = "wasi"
++version = "0.11.0+wasi-snapshot-preview1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "4f186bd2dcf04330886ce82d6f33dd75a7bfcf69ecf5763b89fcde53b6ac9838"
++checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
+ 
+ [[package]]
+ name = "winapi"
+@@ -1582,15 +1463,6 @@ version = "0.4.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
+ 
+-[[package]]
+-name = "windows-core"
+-version = "0.52.0"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "33ab640c8d7e35bf8ba19b884ba838ceb4fba93a4e8c65a9059d08afcfc683d9"
+-dependencies = [
+- "windows-targets 0.52.0",
+-]
+-
+ [[package]]
+ name = "windows-sys"
+ version = "0.48.0"
+diff --git a/Cargo.toml b/Cargo.toml
+index 0f9dda4..10067a5 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -8,6 +8,6 @@ home = "0.5.9"
+ ratatui = "0.26.0"
+ crossterm = "0.27.0"
+ tui-textarea = "0.4.0"
+-chrono = "0.4.33"
+ clap = { version = "4.5.0", features = ["derive", "string"] }
+ age = { version =  "0.10.0", features = ["aes"] }
++ptime = "0.1.1"
+diff --git a/src/app/file/date.rs b/src/app/file/date.rs
+index ee4ac0c..2d602be 100644
+--- a/src/app/file/date.rs
++++ b/src/app/file/date.rs
+@@ -1,27 +1,12 @@
+-use chrono::{Local ,DateTime, FixedOffset};
+-use chrono::format::ParseError;
+-// const FORMAT: &str = "%Y-%m-%d.%H:%M:%S";
+-const FORMAT: &str = "%Y-%m-%d-%H-%M-%S";
+-
+-#[inline]
+-pub fn parse(date_string: &String) -> Result<DateTime<FixedOffset>, ParseError> {
+-    DateTime::parse_from_str(date_string.as_str(), FORMAT)
+-}
++use ptime::{self, Tm};
++const FORMAT: &str = "yyyy-MM-dd_HH-mm-ss";
+ 
+ #[inline]
+ pub fn current_string() -> String {
+-    format(Some(current()))
+-}
+-
+-#[inline]
+-pub fn current() -> DateTime<Local> {
+-    Local::now()
++    current().to_string(FORMAT)
+ }
+ 
+ #[inline]
+-pub fn format(input: Option<DateTime<Local>>) -> String {
+-    match input {
+-        Some(date)=> date.format(FORMAT).to_string(),
+-        None => String::new(),
+-    }
++pub fn current() -> Tm {
++    ptime::now()
+ }
