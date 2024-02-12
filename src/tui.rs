@@ -53,12 +53,19 @@ enum TuiMode {
     TextEditor,
     Pager,
 }
+
+enum TextMode {
+    Add,
+    Edit,
+}
 pub struct TuiApp<'a>{
     mode: TuiMode,
     textarea: TextArea<'a>,
     app: &'a mut App,
     index: usize,
-    pager_scroll: usize,
+    text_mode: TextMode,
+    pager_scroll: u16,
+    content: String,
 }
 
 enum Operation {
@@ -71,10 +78,12 @@ impl <'a>TuiApp <'a>{
     pub fn new(app: &'a mut App) -> Self {
         let textarea = TextArea::default();
         let mut tui_app = TuiApp {
+            text_mode: TextMode::Add,
             pager_scroll: 0,
             index: 0,
             mode: TuiMode::List,
             textarea,
+            content: String::new(),
             app,
         };
 
@@ -102,13 +111,16 @@ impl <'a>TuiApp <'a>{
                 self.textarea.clear_mask_char();
                 self.textarea.set_block(default_block("Write your new journal"));
             }
-            TuiMode::List | TuiMode::Pager =>  {}
+            TuiMode::Pager => {
+                self.content = self.app.nth_content(self.index);
+            }
+            TuiMode::List =>  {}
         }
         self.mode = mode;
     }
 
     #[inline]
-    pub fn ui(&mut self, frame:&mut Frame, list_state: &mut ListState, scrollbar_state: &mut ScrollbarState) {
+    pub fn ui(&mut self, frame:&mut Frame, list_state: &mut ListState) {
         list_state.select(Some(self.index));
         match self.mode {
             TuiMode::Password => {
@@ -129,17 +141,8 @@ impl <'a>TuiApp <'a>{
                 frame.render_stateful_widget(list, frame.size(), list_state)
             }
             TuiMode::Pager => {
-                let paragraph = Paragraph::new(self.app.nth_content(self.index));
-                let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight)
-                    .begin_symbol(Some("↑"))
-                    .end_symbol(Some("↓"));
+                let paragraph = Paragraph::new(self.content.clone()).scroll((self.pager_scroll,0));
                 frame.render_widget(paragraph, frame.size());
-                frame.render_stateful_widget(scrollbar, frame.size().inner(&Margin {
-                    vertical: 1,
-                    horizontal: 0,
-                }),
-                scrollbar_state,
-                );
             }
         }
     }
@@ -176,10 +179,14 @@ impl <'a>TuiApp <'a>{
         }
     }
 
-    fn on_journal_enter(&mut self) {
-        self.set_mode(TuiMode::List);
-        self.app.add_journal(self.textarea.lines().join("\n"));
-        self.textarea = TextArea::default();
+    fn on_new_journal(&mut self) {
+        let journal = self.textarea.lines().join("\n");
+        self.app.add_journal(journal);
+    }
+
+    fn on_edit_journal(&mut self) {
+        let journal = self.textarea.lines().join("\n");
+        self.app.edit_nth(self.index, journal);
     }
 
     pub fn input(&mut self) -> io::Result<Operation>{
@@ -207,7 +214,14 @@ impl <'a>TuiApp <'a>{
                         Input {
                             key: Key::Esc,
                             ..
-                        } => self.on_journal_enter(),
+                        } => {
+                            self.set_mode(TuiMode::List);
+                            match self.text_mode {
+                                TextMode::Add => self.on_new_journal(),
+                                TextMode::Edit => self.on_edit_journal(),
+                            }
+                            self.textarea = TextArea::default();
+                        },
                         input => {
                             self.textarea.input(input);
                         },
@@ -217,7 +231,16 @@ impl <'a>TuiApp <'a>{
                     match input.key {
                         Key::Char('q')=> return Ok(Operation::Quit),
                         Key::Char('a')=> {
+                            self.text_mode = TextMode::Add;
                             self.set_mode(TuiMode::TextEditor);
+                        },
+                        Key::Char('D')=> {
+                            self.app.delete_nth(self.index);
+                        },
+                        Key::Char('e')=> {
+                            self.text_mode = TextMode::Edit;
+                            self.set_mode(TuiMode::TextEditor);
+                            self.textarea.insert_str(self.app.nth_content(self.index));
                         },
                         Key::Enter => {
                             self.set_mode(TuiMode::Pager);
@@ -230,8 +253,11 @@ impl <'a>TuiApp <'a>{
                 TuiMode::Pager => {
                     match input.key {
                         Key::Char('j')=> self.pager_scroll+=1,
-                        Key::Char('k')=> self.pager_scroll-=1,
-                        Key::Esc | Key::Char('q')=> self.set_mode(TuiMode::List),
+                        Key::Char('k')=> if self.pager_scroll > 0 {self.pager_scroll-=1},
+                        Key::Esc | Key::Char('q')=> {
+                                self.content = String::new();
+                                self.set_mode(TuiMode::List)
+                            },
                         _ => {}
                     }
                 }
@@ -246,11 +272,9 @@ fn centered_rect(r: Rect, percent_x: u16, size_y: u16) -> Rect {
   let popup_layout = Layout::default()
     .direction(Direction::Vertical)
     .constraints([
-      // Constraint::Percentage((100 - size_y) / 2),
         Constraint::Min(0),
         Constraint::Length(size_y),
         Constraint::Min(0),
-      // Constraint::Percentage((100 - size_y) / 2),
     ])
     .split(r);
 
@@ -270,11 +294,10 @@ pub fn run(app: &mut App) -> io::Result<()>{
     let mut terminal = Terminal::new(CrosstermBackend::new(io::stdout()))?;
     let mut app = TuiApp::new(app);
     let mut list_state = ListState::default();
-    let mut scrollbar_state = ScrollbarState::default();
 
     loop {
         terminal.draw(|frame| {
-            app.ui(frame, &mut list_state, &mut scrollbar_state);
+            app.ui(frame, &mut list_state);
         })?;
         match app.input()? {
             Operation::Quit => break,

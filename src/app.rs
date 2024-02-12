@@ -1,4 +1,4 @@
-use std::{fs, path::PathBuf, ffi::OsString, io};
+use std::{fs::{self, remove_file}, path::PathBuf, ffi::OsString, io};
 
 use crate::Args;
 
@@ -98,11 +98,18 @@ impl App {
         Ok(())
     }
 
-    pub fn new_journal(&self, journal: String) {
-        if let Some(encryption) = &self.encryption {
-            let path = self.directory.new_path().unwrap();
-            fs::write(path, encryption.encrypt(journal).unwrap());
+    pub fn edit_nth(&mut self, n: usize, journal: String) -> io::Result<()>{
+        if let (Some(path), Some(encryption)) = (self.directory.nth_path(n), &self.encryption){
+            fs::write(path, encryption.encrypt(journal).unwrap())?;
         }
+        Ok(())
+    }
+
+    pub fn delete_nth(&mut self, n: usize) -> io::Result<()>{
+        if let Some(path) = self.directory.nth_path(n) {
+            remove_file(path)?;
+        }
+        Ok(())
     }
 
     pub fn entries(&self) -> Vec<String> {
