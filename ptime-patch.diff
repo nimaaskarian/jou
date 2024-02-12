@@ -296,10 +296,10 @@ index 9c6f17c..1269baf 100644
  name = "windows-sys"
  version = "0.48.0"
 diff --git a/Cargo.toml b/Cargo.toml
-index 0f9dda4..10067a5 100644
+index 17eb86e..4d43746 100644
 --- a/Cargo.toml
 +++ b/Cargo.toml
-@@ -8,6 +8,6 @@ home = "0.5.9"
+@@ -8,9 +8,9 @@ home = "0.5.9"
  ratatui = "0.26.0"
  crossterm = "0.27.0"
  tui-textarea = "0.4.0"
@@ -307,8 +307,11 @@ index 0f9dda4..10067a5 100644
  clap = { version = "4.5.0", features = ["derive", "string"] }
  age = { version =  "0.10.0", features = ["aes"] }
 +ptime = "0.1.1"
+ 
+ [profile.release]
+ codegen-units = 1
 diff --git a/src/app/file/date.rs b/src/app/file/date.rs
-index ee4ac0c..2d602be 100644
+index e0323b0..2d602be 100644
 --- a/src/app/file/date.rs
 +++ b/src/app/file/date.rs
 @@ -1,27 +1,12 @@
