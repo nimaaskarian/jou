@@ -4,7 +4,6 @@ use tui_textarea::{Input, TextArea, CursorMove, Key};
 use crossterm::{
     ExecutableCommand,
     terminal::{disable_raw_mode, LeaveAlternateScreen, enable_raw_mode, EnterAlternateScreen},
-    // event::{self, Event::Key, KeyCode::Char, KeyCode},
 };
 
 use crate::app::App;
@@ -44,9 +43,6 @@ pub fn restart(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Res
     Ok(())
 }
 
-// struct TuiApp {
-
-// }
 enum TuiMode {
     Password,
     List,

@@ -37,6 +37,20 @@ impl App {
         app
     }
 
+    pub fn change_password(&mut self, new_password: String) -> io::Result<()>{
+        let new_encryption = Encryption::new(new_password);
+        if let Some(encryption) = &self.encryption {
+            self.directory.read(|path| {
+                let string = fs::read(&path).unwrap();
+                let decrypted = encryption.decrypt(string).unwrap();
+                if let Ok(encrypted) = new_encryption.encrypt(decrypted) {
+                    fs::write(&path, encrypted);
+                }
+            })?;
+        }
+        Ok(())
+    }
+
     pub fn len(&self) -> usize {
         self.directory.len()
     }
