@@ -1,5 +1,5 @@
 mod tui;
-use std::{fs, path::PathBuf, io::{self, Write}};
+use std::{path::PathBuf, io};
 use clap::Parser;
 use home::home_dir;
 mod app;

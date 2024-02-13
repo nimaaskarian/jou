@@ -101,7 +101,7 @@ impl <'a>TuiApp <'a>{
                 };
                 self.textarea.set_block(default_block(title));
                 self.textarea.set_style(Style::default());
-                self.textarea.set_mask_char('\u{2022}')
+                self.mask_password()
             },
             TuiMode::TextEditor => {
                 self.textarea.clear_mask_char();
@@ -120,7 +120,7 @@ impl <'a>TuiApp <'a>{
         list_state.select(Some(self.index));
         match self.mode {
             TuiMode::Password => {
-                self.textarea.set_mask_char('\u{2022}');
+                self.mask_password();
                 frame.render_widget(self.textarea.widget(),centered_rect(frame.size(), 35, 3));
             }
             TuiMode::TextEditor => {
@@ -137,6 +137,13 @@ impl <'a>TuiApp <'a>{
                 frame.render_stateful_widget(list, frame.size(), list_state)
             }
             TuiMode::Pager => {
+                let max_scroll = match self.content.lines().count() as i32 - frame.size().height as i32 {
+                    ..=0 => 0,
+                    any => any as u16,
+                };
+                if self.pager_scroll > max_scroll {
+                    self.pager_scroll = max_scroll
+                }
                 let paragraph = Paragraph::new(self.content.clone()).scroll((self.pager_scroll,0));
                 frame.render_widget(paragraph, frame.size());
             }
@@ -185,6 +192,18 @@ impl <'a>TuiApp <'a>{
         self.app.edit_nth(self.index, journal);
     }
 
+    pub fn mask_password(&mut self) {
+        self.textarea.set_mask_char('\u{2022}')
+    } 
+
+    pub fn toggle_char_mask(&mut self) {
+        if self.textarea.mask_char().is_some() {
+            self.textarea.clear_mask_char() 
+        } else {
+            self.mask_password()
+        }
+    }
+
     pub fn input(&mut self) -> io::Result<Operation>{
         match crossterm::event::read()?.into() {
             input => {
@@ -196,11 +215,15 @@ impl <'a>TuiApp <'a>{
                             ..
                         } => self.on_password(),
                         Input {
+                                key: Key::Char('t'),
+                            ctrl: true,
+                            ..
+                        } => self.toggle_char_mask(),
+                        Input {
                             key: Key::Esc,
                             ..
                         } => return Ok(Operation::Quit),
                         input => {
-                            self.set_mode(TuiMode::Password);
                             self.textarea.input(input);
                         },
                     }
