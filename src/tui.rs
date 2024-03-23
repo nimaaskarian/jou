@@ -58,6 +58,7 @@ pub struct TuiApp<'a>{
     mode: TuiMode,
     textarea: TextArea<'a>,
     app: &'a mut App,
+    max_scroll: u16,
     index: usize,
     text_mode: TextMode,
     pager_scroll: u16,
@@ -74,6 +75,7 @@ impl <'a>TuiApp <'a>{
     pub fn new(app: &'a mut App) -> Self {
         let textarea = TextArea::default();
         let mut tui_app = TuiApp {
+            max_scroll: 0,
             text_mode: TextMode::Add,
             pager_scroll: 0,
             index: 0,
@@ -137,12 +139,12 @@ impl <'a>TuiApp <'a>{
                 frame.render_stateful_widget(list, frame.size(), list_state)
             }
             TuiMode::Pager => {
-                let max_scroll = match self.content.lines().count() as i32 - frame.size().height as i32 {
+                self.max_scroll = match self.content.lines().count() as i32 - frame.size().height as i32 {
                     ..=0 => 0,
                     any => any as u16,
                 };
-                if self.pager_scroll > max_scroll {
-                    self.pager_scroll = max_scroll
+                if self.pager_scroll > self.max_scroll {
+                    self.pager_scroll = self.max_scroll
                 }
                 let paragraph = Paragraph::new(self.content.clone()).scroll((self.pager_scroll,0));
                 frame.render_widget(paragraph, frame.size());
@@ -176,6 +178,16 @@ impl <'a>TuiApp <'a>{
     #[inline]
     pub fn go_bottom(&mut self) {
         self.index = self.app.len() - 1
+    }
+
+    #[inline]
+    pub fn scroll_bottom(&mut self) {
+        self.pager_scroll = self.max_scroll
+    }
+
+    #[inline]
+    pub fn scroll_top(&mut self) {
+        self.pager_scroll = 0
     }
 
     fn on_password(&mut self) {
@@ -285,6 +297,8 @@ impl <'a>TuiApp <'a>{
                 }
                 TuiMode::Pager => {
                     match input.key {
+                        Key::Char('g')=> self.scroll_top(),
+                        Key::Char('G')=> self.scroll_bottom(),
                         Key::Char('j')=> self.pager_scroll+=1,
                         Key::Char('k')=> if self.pager_scroll > 0 {self.pager_scroll-=1},
                         Key::Esc | Key::Char('q')=> {
