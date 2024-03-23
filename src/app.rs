@@ -1,4 +1,4 @@
-use std::{fs::{self, remove_file}, path::PathBuf, ffi::OsString, io};
+use std::{fs::{self, remove_file}, io};
 
 use crate::Args;
 
@@ -27,14 +27,14 @@ pub fn encryption_from_option_passphrase(passphrase: Option<String>) -> Option<E
 }
 
 impl App {
-    pub fn new(args:Args) -> Self {
+    pub fn new(args:Args) -> io::Result<Self> {
         let mut app = App {
             journals_to_add: args.add,
             encryption: encryption_from_option_passphrase(args.passphrase),
             directory: Directory::new(args.path).unwrap(),
         };
-        app.add_journals();
-        app
+        app.add_journals()?;
+        Ok(app)
     }
 
     pub fn change_password(&mut self, new_password: String) -> io::Result<()>{
@@ -44,8 +44,9 @@ impl App {
                 let string = fs::read(&path).unwrap();
                 let decrypted = encryption.decrypt(string).unwrap();
                 if let Ok(encrypted) = new_encryption.encrypt(decrypted) {
-                    fs::write(&path, encrypted);
+                    fs::write(&path, encrypted)?;
                 }
+                Ok(())
             })?;
         }
         Ok(())
@@ -69,20 +70,22 @@ impl App {
         String::new()
     }
 
-    pub fn add_journals(&mut self) {
+    pub fn add_journals(&mut self) -> io::Result<()>{
         if self.test_passphrase().is_ok() {
             for journal in &self.journals_to_add {
-                self.add_journal(journal)
+                self.add_journal(journal)?;
             }
         }
+        Ok(())
     }
 
-    pub fn add_journal<S: AsRef<str>>(&self, journal: S) {
+    pub fn add_journal<S: AsRef<str>>(&self, journal: S) -> io::Result<()>{
         if let Some(encryption) = &self.encryption {
             let encrypted = encryption.encrypt(journal).unwrap();
             let path = self.directory.new_path().unwrap();
-            fs::write(path, encrypted);
+            fs::write(path, encrypted)?;
         }
+        Ok(())
     }
 
     pub fn has_passphrase(&self) -> bool {
@@ -133,12 +136,16 @@ impl App {
         }
     }
 
-    pub fn read(&self) {
+    pub fn read(&self) -> io::Result<()> {
         if let Some(encryption) = &self.encryption {
             self.directory.read(|path| {
-                let string = fs::read(path).unwrap();
-                println!("{}", encryption.decrypt(string).unwrap());
-            });
+                let encrypted = fs::read(path)?;
+                if let Ok(decrypted) = encryption.decrypt(encrypted) {
+                    println!("{}", decrypted);
+                }
+                Ok(())
+            })?;
         }
+        Ok(())
     }
 }

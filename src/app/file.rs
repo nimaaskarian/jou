@@ -1,4 +1,4 @@
-use std::{path::PathBuf, fs::{create_dir_all, self, File}, io, ffi::{OsString, OsStr}};
+use std::{path::PathBuf, fs::{create_dir_all, self}, io};
 use std::convert::TryFrom;
 mod date;
 
@@ -80,17 +80,17 @@ impl Directory {
     pub fn entries(&mut self) -> io::Result<Vec<String>> {
         let len = self.len();
         if len != self.last_len {
-            self.update_entries();
+            self.update_entries()?;
             self.last_len = len;
         }
         Ok(self.entries.clone())
     }
 
     pub fn read<F>(&self, callback: F) -> io::Result<()> where 
-        F: Fn(PathBuf) {
+        F: Fn(PathBuf)->io::Result<()> {
         for entry in fs::read_dir(&self.path)? {
             let entry = entry?;
-            callback(entry.path());
+            callback(entry.path())?;
         }
         Ok(())
     }

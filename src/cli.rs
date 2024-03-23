@@ -19,9 +19,9 @@ pub fn run(app: &mut App) -> io::Result<()>{
         println!("Error: Incorrect password");
         return Ok(());
     }
-    app.read();
+    app.read()?;
 
-    app.add_journals();
+    app.add_journals()?;
     // for journal in app.add_journal(journal)
     //     app.new_journal(journal)
     // }
