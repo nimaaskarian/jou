@@ -1,5 +1,5 @@
 diff --git a/Cargo.lock b/Cargo.lock
-index 9c6f17c..1269baf 100644
+index bbe4a28..e8afa04 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
 @@ -85,21 +85,6 @@ version = "0.2.16"
@@ -127,7 +127,7 @@ index 9c6f17c..1269baf 100644
  name = "indexmap"
  version = "2.2.2"
 @@ -752,23 +679,14 @@ name = "jou"
- version = "0.1.0"
+ version = "0.1.1"
  dependencies = [
   "age",
 - "chrono",
@@ -296,7 +296,7 @@ index 9c6f17c..1269baf 100644
  name = "windows-sys"
  version = "0.48.0"
 diff --git a/Cargo.toml b/Cargo.toml
-index 17eb86e..4d43746 100644
+index 1133dd9..75afcff 100644
 --- a/Cargo.toml
 +++ b/Cargo.toml
 @@ -8,9 +8,9 @@ home = "0.5.9"
