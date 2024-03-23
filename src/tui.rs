@@ -1,6 +1,6 @@
-use std::{io::{self, stdout, Write}, env, process::{Command, Stdio}, fs::{self, File}};
+use std::io::{self, stdout};
 use ratatui::{prelude::*, widgets::*};
-use tui_textarea::{Input, TextArea, CursorMove, Key};
+use tui_textarea::{Input, TextArea, Key};
 use crossterm::{
     ExecutableCommand,
     terminal::{disable_raw_mode, LeaveAlternateScreen, enable_raw_mode, EnterAlternateScreen},
@@ -64,7 +64,7 @@ pub struct TuiApp<'a>{
     content: String,
 }
 
-enum Operation {
+pub enum Operation {
     Nothing,
     Restart,
     Quit,
@@ -155,7 +155,7 @@ impl <'a>TuiApp <'a>{
         if self.index < self.app.len() - 1 {
             self.index += 1;
         } else {
-            self.index = 0
+            self.go_top()
         }
     }
 
@@ -164,8 +164,18 @@ impl <'a>TuiApp <'a>{
         if self.index > 0 {
             self.index -= 1;
         } else {
-            self.index = self.app.len() - 1
+            self.go_bottom()
         }
+    }
+
+    #[inline]
+    pub fn go_top(&mut self) {
+        self.index = 0
+    }
+
+    #[inline]
+    pub fn go_bottom(&mut self) {
+        self.index = self.app.len() - 1
     }
 
     fn on_password(&mut self) {
@@ -182,14 +192,16 @@ impl <'a>TuiApp <'a>{
         }
     }
 
-    fn on_new_journal(&mut self) {
+    fn on_new_journal(&mut self) -> io::Result<()> {
         let journal = self.textarea.lines().join("\n");
-        self.app.add_journal(journal);
+        self.app.add_journal(journal)?;
+        Ok(())
     }
 
-    fn on_edit_journal(&mut self) {
+    fn on_edit_journal(&mut self) -> io::Result<()>{
         let journal = self.textarea.lines().join("\n");
-        self.app.edit_nth(self.index, journal);
+        self.app.edit_nth(self.index, journal)?;
+        Ok(())
     }
 
     pub fn mask_password(&mut self) {
@@ -236,8 +248,8 @@ impl <'a>TuiApp <'a>{
                         } => {
                             self.set_mode(TuiMode::List);
                             match self.text_mode {
-                                TextMode::Add => self.on_new_journal(),
-                                TextMode::Edit => self.on_edit_journal(),
+                                TextMode::Add => self.on_new_journal()?,
+                                TextMode::Edit => self.on_edit_journal()?,
                             }
                             self.textarea = TextArea::default();
                         },
@@ -254,18 +266,20 @@ impl <'a>TuiApp <'a>{
                             self.set_mode(TuiMode::TextEditor);
                         },
                         Key::Char('D')=> {
-                            self.app.delete_nth(self.index);
+                            self.app.delete_nth(self.index)?;
                         },
                         Key::Char('e')=> {
                             self.text_mode = TextMode::Edit;
                             self.set_mode(TuiMode::TextEditor);
                             self.textarea.insert_str(self.app.nth_content(self.index));
                         },
-                        Key::Enter => {
+                        Key::Char('l') | Key::Enter => {
                             self.set_mode(TuiMode::Pager);
                         }
                         Key::Char('j')=> self.increment_index(),
                         Key::Char('k')=> self.decrement_index(),
+                        Key::Char('g')=> self.go_top(),
+                        Key::Char('G')=> self.go_bottom(),
                         _ =>{},
                     }
                 }

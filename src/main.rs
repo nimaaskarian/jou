@@ -16,7 +16,7 @@ pub fn append_home_dir(vec: [&str; 3]) -> PathBuf {
         path = path.join(item);
     }
 
-    return path
+    path
 }
 
 pub fn default_directory() -> PathBuf {
@@ -53,9 +53,9 @@ impl Args {
 fn main() -> io::Result<()>{
     let args = Args::parse();
     let is_cli = args.is_cli();
-    let mut app = App::new(args);
+    let mut app = App::new(args)?;
     if is_cli {
-        cli::run(&mut app);
+        cli::run(&mut app)?;
     } else {
         tui::run(&mut app)?;
     }
